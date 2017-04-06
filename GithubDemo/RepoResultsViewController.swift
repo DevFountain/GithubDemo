@@ -10,15 +10,20 @@ import UIKit
 import MBProgressHUD
 
 // Main ViewController
-class RepoResultsViewController: UIViewController {
+class RepoResultsViewController: UIViewController ,UITableViewDataSource,UITableViewDelegate{
 
     var searchBar: UISearchBar!
     var searchSettings = GithubRepoSearchSettings()
 
-    var repos: [GithubRepo]!
+    var repos: [GithubRepo]! = []
 
+    @IBOutlet weak var table_view: UITableView!
     override func viewDidLoad() {
         super.viewDidLoad()
+        table_view.dataSource = self
+        table_view.delegate = self
+        table_view.estimatedRowHeight = 100
+        table_view.rowHeight = UITableViewAutomaticDimension
 
         // Initialize the UISearchBar
         searchBar = UISearchBar()
@@ -43,12 +48,32 @@ class RepoResultsViewController: UIViewController {
             // Print the returned repositories to the output window
             for repo in newRepos {
                 print(repo)
-            }   
+                self.repos.append(repo)
+            }
+            
+            self.table_view.reloadData()
 
             MBProgressHUD.hide(for: self.view, animated: true)
             }, error: { (error) -> Void in
                 print(error)
         })
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return self.repos.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = table_view.dequeueReusableCell(withIdentifier: "CustomRepoCell") as! CustomRepoCell
+        
+        let repo = self.repos[indexPath.row]
+        cell.name.text = repo.name
+        cell.owners.text = repo.ownerHandle
+        cell.forks.text = String(repo.forks!)
+        cell.stars.text = String(repo.stars!)
+        cell.avatar_image.setImageWith(URL(string:repo.ownerAvatarURL!)!)
+        cell.description_label.text = repo.repoDescription
+        return cell
     }
 }
 
@@ -76,3 +101,4 @@ extension RepoResultsViewController: UISearchBarDelegate {
         doSearch()
     }
 }
+
